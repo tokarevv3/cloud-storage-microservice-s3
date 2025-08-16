@@ -10,6 +10,6 @@ public interface FolderService {
 
     boolean deleteFolder(String bucketName, String folderName);
 
-    void deleteObjectsInFolder(String bucketName, String FolderName);
+    void deleteObjectsInFolder(String bucketName, String folderName) throws Exception;
 
 }
