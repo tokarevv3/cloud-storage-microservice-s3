@@ -57,14 +57,7 @@ public class FolderServiceImpl implements FolderService {
     public boolean updateFolderPath(String bucketName, String folderOldPath, String folderNewPath) {
         log.debug("Trying to update folder [{}] path to [{}] in bucket '{}'", folderOldPath, folderNewPath, bucketName);
         try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(bucketName)
-                            .prefix(folderOldPath)
-                            .recursive(true)
-                            .build()
-            );
-            log.debug("Successfully retrieved objects list for folder [{}]", folderOldPath);
+            var results = getFolderObjects(bucketName, folderOldPath);
 
             for (Result<Item> result : results) {
                 Item item = result.get();
@@ -112,7 +105,7 @@ public class FolderServiceImpl implements FolderService {
             deleteObjectsInFolder(bucketName, folderName);
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to delete folder [{}] in bucket '{}'. Reason: {}", folderName, bucketName, e, e);
             return false;
         }
     }
@@ -124,14 +117,7 @@ public class FolderServiceImpl implements FolderService {
         }
         log.debug("Trying to delete objects in folder [{}] in bucket '{}'", folderName, bucketName);
 
-        Iterable<Result<Item>> results = minioClient.listObjects(
-                ListObjectsArgs.builder()
-                        .recursive(true)
-                        .bucket(bucketName)
-                        .prefix(folderName)
-                        .build()
-        );
-        log.debug("Successfully retrieved objects list for folder [{}]", folderName);
+        var results = getFolderObjects(bucketName, folderName);
 
         int deletedCount = 0;
         for (Result<Item> result : results) {
@@ -152,6 +138,18 @@ public class FolderServiceImpl implements FolderService {
         }
 
         log.info("Deleted [{}] objects from folder [{}] in bucket '{}'", deletedCount, folderName, bucketName);
+    }
+
+    private Iterable<Result<Item>> getFolderObjects(String bucketName, String folderName) {
+        Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .recursive(true)
+                        .bucket(bucketName)
+                        .prefix(folderName)
+                        .build()
+        );
+        log.debug("Successfully retrieved objects list for folder [{}]", folderName);
+        return results;
     }
 
 }
